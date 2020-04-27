@@ -7,7 +7,7 @@ public class Knight : MonoBehaviour
     public float movementSpeed = 3f;
     private Vector3 jump;
     private Rigidbody2D rb;
-    private bool isGrounded = true;
+    private bool inAir = false;
 
     Animator animator;
 
@@ -21,10 +21,32 @@ public class Knight : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        float horizontalInput = Input.GetAxis("Horizontal");
+        SetInAir();
+        Move();
+        Jump();
+    }
 
+    void SetInAir()
+    {
+        bool newInAir = rb.velocity.y != 0;
+        if (!newInAir && inAir)
+        {
+            StartCoroutine(ExitJump());
+        }
+        inAir = newInAir;
+    }
+
+    void Move()
+    {
+        float horizontalInput = Input.GetAxis("Horizontal");
         animator.SetFloat("Speed", Mathf.Abs(horizontalInput));
 
+        CheckDirectionIsCorrect(horizontalInput);
+        transform.position = transform.position + new Vector3(horizontalInput * movementSpeed * Time.deltaTime, 0, 0);
+    }
+
+    void CheckDirectionIsCorrect(float horizontalInput)
+    {
         if (horizontalInput < 0 && transform.eulerAngles.y == 0)
         {
             transform.eulerAngles = new Vector3(0, 180, 0);
@@ -33,31 +55,25 @@ public class Knight : MonoBehaviour
         {
             transform.eulerAngles = new Vector3(0, 0, 0);
         }
+    }
 
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+
+    void Jump()
+    {
+        if (Input.GetKeyDown(KeyCode.Space) && !inAir)
         {
             animator.SetBool("Jump", true);
             rb.AddForce(jump);
-            isGrounded = false;
+            inAir = true;
         }
-
-        transform.position = transform.position + new Vector3(horizontalInput * movementSpeed * Time.deltaTime, 0, 0);
-    }
-
-    void OnCollisionEnter2D()
-    {
-        StartCoroutine(ExitJump());
-    }
-
-    void OnCollisionExit2D()
-    {
-        isGrounded = false;
     }
 
     IEnumerator ExitJump()
     {
-        isGrounded = true;
         yield return new WaitForSeconds(0.1f);
-        animator.SetBool("Jump", false);
+        if (rb.velocity.y == 0)
+        {
+            animator.SetBool("Jump", false);
+        }
     }
 }
