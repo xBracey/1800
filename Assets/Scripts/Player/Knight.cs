@@ -8,8 +8,10 @@ public class Knight : MonoBehaviour
     private Vector3 jump;
     private Rigidbody2D rb;
     private bool inAir = false;
+    private float attackCooldown = 0.5f;
+    public bool isAttacking = false;
 
-    Animator animator;
+    private Animator animator;
 
     void Start()
     {
@@ -24,6 +26,7 @@ public class Knight : MonoBehaviour
         SetInAir();
         Move();
         Jump();
+        Attack();
     }
 
     void SetInAir()
@@ -66,6 +69,24 @@ public class Knight : MonoBehaviour
             rb.AddForce(jump);
             inAir = true;
         }
+    }
+
+    void Attack()
+    {
+        if (Input.GetMouseButtonDown(0) && !isAttacking)
+        {
+            animator.SetBool("Attack", true);
+            isAttacking = true;
+            StartCoroutine(ExitAttack());
+        }
+    }
+
+    IEnumerator ExitAttack()
+    {
+        yield return new WaitForSeconds(0.36f);
+        animator.SetBool("Attack", false);
+        yield return new WaitForSeconds(attackCooldown - 0.36f);
+        isAttacking = false;
     }
 
     IEnumerator ExitJump()
